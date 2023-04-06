@@ -3,5 +3,5 @@
 * 参考书籍 https://craftinginterpreters.com/
 
 # Destination
-* Implement the full-feature programming language Lox by Kotlin(Originally by Java).
+* Implement the full-featured programming language Lox by Kotlin(Originally by Java).
 * Accomplish all the challenges in this book ***Crafting Interpreters*** to make it a useful language.
