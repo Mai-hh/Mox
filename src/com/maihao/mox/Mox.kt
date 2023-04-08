@@ -7,29 +7,29 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+fun main(args: Array<String>) {
+    if (args.size > 1) {
+        println("Usage: mox [script]")
+        exitProcess(64)
+    } else if (args.size == 1) {
+        Mox.runFile(args[0])
+    } else {
+        Mox.runPrompt()
+    }
+}
+
 class Mox {
     companion object {
         var hadError = false
 
-        fun main(args: Array<String>) {
-            if (args.size > 1) {
-                println("Usage: mox [script]")
-                exitProcess(64)
-            } else if (args.size == 1) {
-                runFile(args[0])
-            } else {
-                runPrompt()
-            }
-        }
-
-        private fun runFile(path: String) {
+        internal fun runFile(path: String) {
             val bytes = Files.readAllBytes(Paths.get(path))
             run(String(bytes, Charset.defaultCharset()))
 
             if (hadError) exitProcess(65)
         }
 
-        private fun runPrompt() {
+        internal fun runPrompt() {
             val input = InputStreamReader(System.`in`)
             val reader = BufferedReader(input)
 
