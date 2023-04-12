@@ -59,8 +59,9 @@ class Mox {
             report(line, "", message)
         }
     }
-}
 
+    val test = Expr.Literal("1")
+}
 
 
 
