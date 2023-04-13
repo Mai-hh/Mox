@@ -49,6 +49,11 @@ class Mox {
 
             // Stop if there was a syntax error.
             if (hadError) return
+
+            tokens.forEach {
+                println(it)
+            }
+
             println(AstPrinter().print(expression))
         }
 

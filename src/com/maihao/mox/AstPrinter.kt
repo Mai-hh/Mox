@@ -13,6 +13,15 @@ class AstPrinter : Expr.Visitor<String> {
         )
     )
 
+    override fun visitTernaryExpr(expr: Expr.Ternary) = parenthesis(
+        name = expr.operator1.lexeme + expr.operator2.lexeme,
+        exprs = arrayOf(
+            expr.first,
+            expr.second,
+            expr.third
+        )
+    )
+
     override fun visitGroupingExpr(expr: Expr.Grouping) = parenthesis(
         name = "group",
         exprs = arrayOf(expr.expression)
@@ -57,6 +66,7 @@ class AstPrinter : Expr.Visitor<String> {
         builder.append(name)
         return builder.toString()
     }
+
 }
 
 fun main(args: Array<String>) {

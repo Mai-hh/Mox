@@ -17,8 +17,9 @@ fun main(args: Array<String>) {
         types = listOf(
             "Binary   -> left: Expr, operator: Token, right: Expr",
             "Grouping -> expression: Expr",
-            "Literal  -> value: Any",
-            "Unary    -> operator: Token, right: Expr"
+            "Literal  -> value: Any?",
+            "Unary    -> operator: Token, right: Expr",
+            "Ternary  -> first: Expr, operator1: Token, second: Expr, operator2: Token, third: Expr"
         )
     )
 }
@@ -63,6 +64,7 @@ private fun defineType(
         println("\t\t\treturn visitor.visit$className$baseName(this)")
         println("\t\t}")
         println("\t}")
+        println()
     }
 }
 

@@ -5,7 +5,7 @@ import com.maihao.mox.TokenType.*
 /*
 Parser rules:
 
-expression     → equality ("," equality )* ;
+expression     → equality ( ("," equality )* | ( "?" equality ":" equality )? ) ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
@@ -39,6 +39,21 @@ class Parser(val tokens: List<Token>) {
             val right = equality()
             expr = Expr.Binary(expr, operator, right)
         }
+
+        if (match(QUESTION_MARK)) {
+            val operator1 = previous()
+            val second = equality()
+            val operator2 = consume(COLON, "Expect ':' after '?'.")
+            val third = equality()
+            expr = Expr.Ternary(
+                first = expr,
+                operator1 = operator1,
+                second = second,
+                operator2 = operator2,
+                third = third
+            )
+        }
+
         return expr
     }
 

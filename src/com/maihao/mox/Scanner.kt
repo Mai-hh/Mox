@@ -68,6 +68,10 @@ class Scanner(
                     addToken(SLASH)
                 }
             }
+
+            '?' -> addToken(QUESTION_MARK)
+            ':' -> addToken(COLON)
+
             ' ',
             '\r',
             '\t' -> { }
