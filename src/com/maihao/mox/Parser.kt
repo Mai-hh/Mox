@@ -17,12 +17,23 @@ primary        → NUMBER | STRING | "true" | "false" | "nil"
  */
 
 class Parser(val tokens: List<Token>) {
+
+    private class ParseError : RuntimeException()
+
     private var current = 0
+
+    fun parse(): Expr? {
+        return try {
+            expression()
+        } catch (error: ParseError) {
+            null
+        }
+    }
 
     private fun expression() = equality()
 
     private fun equality(): Expr {
-        var expr = comparsion()
+        var expr = comparison()
 
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
             val operator = previous()
@@ -87,6 +98,8 @@ class Parser(val tokens: List<Token>) {
             consume(RIGHT_PAREN, "Expect ')' after expression.")
             return Expr.Grouping(expr)
         }
+
+        throw error(token = peek(), "Expect expression.")
     }
 
     private fun isAtEnd(): Boolean {
@@ -122,5 +135,39 @@ class Parser(val tokens: List<Token>) {
             }
         }
         return false
+    }
+
+    private fun consume(type: TokenType, message: String): Token {
+        if (check(type)) return advance()
+        throw error(token = peek(), message)
+    }
+
+    private fun error(token: Token, message: String): ParseError {
+        Mox.error(token, message)
+        return ParseError()
+    }
+
+    private fun synchronize() {
+        advance()
+
+        while (!isAtEnd()) {
+            if (previous().type == SEMICOLON) return
+
+            when (peek().type) {
+                CLASS,
+                FUN,
+                VAR,
+                FOR,
+                IF,
+                WHILE,
+                PRINT,
+                RETURN -> {
+                    return
+                }
+                else -> {}
+            }
+
+            advance()
+        }
     }
 }

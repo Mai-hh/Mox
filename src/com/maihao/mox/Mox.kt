@@ -44,10 +44,12 @@ class Mox {
         private fun run(source: String) {
             val scanner = Scanner(source)
             val tokens: List<Token> = scanner.scanTokens()
+            val parser = Parser(tokens)
+            val expression: Expr? = parser.parse()
 
-            tokens.forEach {
-                println(it)
-            }
+            // Stop if there was a syntax error.
+            if (hadError) return
+            println(AstPrinter().print(expression))
         }
 
         private fun report(line: Int, where: String, message: String) {
@@ -58,9 +60,15 @@ class Mox {
         fun error(line: Int, message: String) {
             report(line, "", message)
         }
-    }
 
-    val test = Expr.Literal("1")
+        fun error(token: Token, message: String) {
+            if (token.type == TokenType.EOF) {
+                report(token.line, " at end", message)
+            } else {
+                report(token.line, " at '${token.lexeme}'", message)
+            }
+        }
+    }
 }
 
 

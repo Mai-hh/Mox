@@ -3,9 +3,9 @@ package com.maihao.mox
 
 class AstPrinter : Expr.Visitor<String> {
 
-    internal fun print(expr: Expr) = expr.accept(this)
+    internal fun print(expr: Expr?) = expr?.accept(this)
 
-    override fun visitBinaryExpr(expr: Expr.Binary) = rpnString(
+    override fun visitBinaryExpr(expr: Expr.Binary) = parenthesis(
         name = expr.operator.lexeme,
         exprs = arrayOf(
             expr.left,
@@ -26,7 +26,7 @@ class AstPrinter : Expr.Visitor<String> {
     }
 
 
-    override fun visitUnaryExpr(expr: Expr.Unary) = rpnString(
+    override fun visitUnaryExpr(expr: Expr.Unary) = parenthesis(
         name = expr.operator.lexeme,
         exprs = arrayOf(expr.right)
     )
