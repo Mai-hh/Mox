@@ -5,7 +5,7 @@ import com.maihao.mox.TokenType.*
 /*
 Parser rules:
 
-expression     → equality ;
+expression     → equality ("," equality )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
@@ -14,6 +14,7 @@ unary          → ( "!" | "-" ) unary
                | primary ;
 primary        → NUMBER | STRING | "true" | "false" | "nil"
                | "(" expression ")" ;
+
  */
 
 class Parser(val tokens: List<Token>) {
@@ -30,7 +31,16 @@ class Parser(val tokens: List<Token>) {
         }
     }
 
-    private fun expression() = equality()
+    private fun expression(): Expr {
+        var expr = equality()
+
+        while (match(COMMA)) {
+            val operator = previous()
+            val right = equality()
+            expr = Expr.Binary(expr, operator, right)
+        }
+        return expr
+    }
 
     private fun equality(): Expr {
         var expr = comparison()
