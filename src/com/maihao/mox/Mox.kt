@@ -20,13 +20,16 @@ fun main(args: Array<String>) {
 
 class Mox {
     companion object {
+        private val interpreter: Interpreter = Interpreter()
         var hadError = false
+        var hadRuntimeError = false
 
         internal fun runFile(path: String) {
             val bytes = Files.readAllBytes(Paths.get(path))
             run(String(bytes, Charset.defaultCharset()))
 
             if (hadError) exitProcess(65)
+            if (hadRuntimeError) exitProcess(70)
         }
 
         internal fun runPrompt() {
@@ -50,11 +53,9 @@ class Mox {
             // Stop if there was a syntax error.
             if (hadError) return
 
-            tokens.forEach {
-                println(it)
-            }
+            interpreter.interpret(expression)
 
-            println(AstPrinter().print(expression))
+            println("AST:\n" + AstPrinter().print(expression))
         }
 
         private fun report(line: Int, where: String, message: String) {
@@ -73,6 +74,12 @@ class Mox {
                 report(token.line, " at '${token.lexeme}'", message)
             }
         }
+
+        fun runtimeError(error: RuntimeError) {
+            println(error.message + "\n[line " + error.token.line + "]")
+            hadRuntimeError = true
+        }
+
     }
 }
 

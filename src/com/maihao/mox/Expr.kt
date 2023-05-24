@@ -37,9 +37,13 @@ sealed class Expr {
         }
     }
 
-    class Ternary(val first: Expr, val operator1: Token, val second: Expr, val operator2: Token, val third: Expr) :
-        Expr() {
-
+    class Ternary(
+        val first: Expr,
+        val operator1: Token,
+        val second: Expr,
+        val operator2: Token,
+        val third: Expr
+    ) : Expr() {
         override fun <R> accept(visitor: Visitor<R>): R {
             return visitor.visitTernaryExpr(this)
         }
