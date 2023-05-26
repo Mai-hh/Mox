@@ -55,7 +55,7 @@ class Mox {
 
             interpreter.interpret(expression)
 
-            println(AstPrinter().print(expression))
+            println("AST:\n" + AstPrinter().print(expression))
         }
 
         private fun report(line: Int, where: String, message: String) {
