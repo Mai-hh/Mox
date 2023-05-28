@@ -3,15 +3,46 @@ package com.maihao.mox
 import com.maihao.mox.TokenType.*
 
 
-class Interpreter : Expr.Visitor<Any?> {
+class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
-    fun interpret(expression: Expr?) {
+    private var environment = Environment()
+
+    internal fun interpret(statements: List<Stmt>) {
         try {
-            val value = evaluate(expression!!)
-            println(stringify(value))
+            for (statement: Stmt in statements) {
+                execute(statement)
+            }
         } catch (error: RuntimeError) {
             Mox.runtimeError(error)
         }
+    }
+
+    /* Stmt.Visitor */
+    override fun visitBlockStmt(stmt: Stmt.Block) {
+        executeBlock(stmt.statements, Environment(environment))
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        evaluate(stmt.expression)
+    }
+
+    override fun visitPrintStmt(stmt: Stmt.Print) {
+        val value = evaluate(stmt.expression)
+        println(stringify(value))
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        var value: Any? = null
+        stmt.initializer?.let {
+            value = evaluate(it)
+        }
+
+        environment.define(stmt.name.lexeme, value)
+    }
+
+    /* Expr.Visitor */
+    override fun visitVariableExpr(expr: Expr.Variable): Any? {
+        return environment[expr.name]
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary): Any? {
@@ -23,6 +54,7 @@ class Interpreter : Expr.Visitor<Any?> {
                 checkNumberOperand(expr.operator, right)
                 -(right as Double)
             }
+
             else -> null
         }
     }
@@ -41,6 +73,12 @@ class Interpreter : Expr.Visitor<Any?> {
         throw RuntimeError(operator, "Operands must be numbers.")
     }
 
+    override fun visitAssignExpr(expr: Expr.Assign): Any? {
+        val value = evaluate(expr.value)
+        environment.assign(expr.name, value)
+        return value
+    }
+
     override fun visitBinaryExpr(expr: Expr.Binary): Any? {
         val left = evaluate(expr.left)
         val right = evaluate(expr.right)
@@ -50,24 +88,29 @@ class Interpreter : Expr.Visitor<Any?> {
                 checkNumberOperands(expr.operator, left, right)
                 return (left as Double) > (right as Double)
             }
+
             GREATER_EQUAL -> {
                 checkNumberOperands(expr.operator, left, right)
                 return (left as Double) >= (right as Double)
             }
+
             LESS -> {
                 checkNumberOperands(expr.operator, left, right)
                 return (left as Double) < (right as Double)
             }
+
             LESS_EQUAL -> {
                 checkNumberOperands(expr.operator, left, right)
                 return (left as Double) <= (right as Double)
             }
+
             BANG_EQUAL -> return !isEqual(left, right)
             EQUAL_EQUAL -> return isEqual(left, right)
             MINUS -> {
                 checkNumberOperands(expr.operator, left, right)
                 return (left as Double).minus(right as Double)
             }
+
             PLUS -> {
                 if ((left is Double) && (right is Double)) return left.plus(right)
                 if ((left is String) && (right is String)) return left + right
@@ -76,14 +119,17 @@ class Interpreter : Expr.Visitor<Any?> {
                     "Operands must be two numbers or two strings."
                 )
             }
+
             SLASH -> {
                 checkNumberOperands(expr.operator, left, right)
                 return (left as Double).div(right as Double)
             }
+
             STAR -> {
                 checkNumberOperands(expr.operator, left, right)
                 return (left as Double).times(right as Double)
             }
+
             else -> return null
         }
     }
@@ -124,6 +170,22 @@ class Interpreter : Expr.Visitor<Any?> {
         return expr.accept(this)
     }
 
+    private fun execute(stmt: Stmt) {
+        stmt.accept(this)
+    }
+
+    private fun executeBlock(statements: List<Stmt>, environment: Environment) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+            for (statement in statements) {
+                execute(statement)
+            }
+        } finally {
+            this.environment = previous
+        }
+    }
+
     private fun stringify(obj: Any?): String {
         if (obj == null) return "nil"
 
@@ -137,4 +199,6 @@ class Interpreter : Expr.Visitor<Any?> {
 
         return obj.toString()
     }
+
+
 }

@@ -15,13 +15,21 @@ fun main(args: Array<String>) {
         outputDir,
         baseName = "Expr",
         types = listOf(
+            "Assign   -> name: Token, value: Expr",
             "Binary   -> left: Expr, operator: Token, right: Expr",
             "Grouping -> expression: Expr",
             "Literal  -> value: Any?",
+            "Variable -> name: Token",
             "Unary    -> operator: Token, right: Expr",
             "Ternary  -> first: Expr, operator1: Token, second: Expr, operator2: Token, third: Expr"
         )
     )
+    defineAst(outputDir, "Stmt", listOf(
+        "Block        -> statements: List<Stmt>",
+        "Expression   -> expression: Expr",
+        "Print        -> expression: Expr",
+        "Var          -> name: Token, initializer: Expr?"
+    ))
 }
 
 @Throws(IOException::class)

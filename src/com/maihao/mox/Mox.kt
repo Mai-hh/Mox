@@ -48,14 +48,13 @@ class Mox {
             val scanner = Scanner(source)
             val tokens: List<Token> = scanner.scanTokens()
             val parser = Parser(tokens)
-            val expression: Expr? = parser.parse()
+            val statements = parser.parse()
 
             // Stop if there was a syntax error.
             if (hadError) return
 
-            interpreter.interpret(expression)
+            interpreter.interpret(statements)
 
-            println("AST:\n" + AstPrinter().print(expression))
         }
 
         private fun report(line: Int, where: String, message: String) {

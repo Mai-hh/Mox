@@ -4,16 +4,27 @@ import com.maihao.mox.TokenType.*
 
 /*
 Parser rules:
-
-expression     → equality ( ("," equality )* | ( "?" equality ":" equality )? ) ;
+program        → declaration* EOF ;
+declaration    → varDecl
+               | statement ;
+statement      → exprStmt
+               | printStmt
+               | block ;
+block          → "{" declaration* "}" ;
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+expression     → assignment ;
+assignment     → IDENTIFIER "=" assignment
+               | equality ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term           → factor ( ( "-" | "+" ) factor )* ;
 factor         → unary ( ( "/" | "*" ) unary )* ;
 unary          → ( "!" | "-" ) unary
                | primary ;
-primary        → NUMBER | STRING | "true" | "false" | "nil"
-               | "(" expression ")" ;
+primary        → "true" | "false" | "nil"
+               | NUMBER | STRING
+               | "(" expression ")"
+               | IDENTIFIER ;
 
  */
 
@@ -23,38 +34,89 @@ class Parser(val tokens: List<Token>) {
 
     private var current = 0
 
-    fun parse(): Expr? {
-        return try {
-            expression()
+    fun parse(): List<Stmt> {
+        val statements = mutableListOf<Stmt>()
+        while (!isAtEnd()) {
+            declaration()?.let { statements.add(it) }
+        }
+
+        return statements
+    }
+
+    private fun declaration(): Stmt? {
+        try {
+            if (match(VAR)) return varDeclaration()
+            return statement()
         } catch (error: ParseError) {
-            null
+            synchronize()
+            return null
         }
     }
 
-    private fun expression(): Expr {
-        var expr = equality()
+    private fun varDeclaration(): Stmt {
+        val name = consume(IDENTIFIER, "Expect variable name.")
 
-        while (match(COMMA)) {
-            val operator = previous()
-            val right = equality()
-            expr = Expr.Binary(expr, operator, right)
+        var initializer: Expr? = null
+        if (match(EQUAL)) initializer = expression()
+
+        consume(SEMICOLON, "Expect ';' after variable declaration.")
+        return Stmt.Var(name, initializer)
+    }
+
+    private fun statement(): Stmt =
+        if (match(PRINT)) printStatement()
+        else if (match(LEFT_BRACE)) Stmt.Block(block())
+        else expressionStatement()
+
+    private fun block(): List<Stmt> {
+        val statements = mutableListOf<Stmt>()
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            declaration()?.let { statements.add(it) }
         }
 
-        if (match(QUESTION_MARK)) {
-            val operator1 = previous()
-            val second = equality()
-            val operator2 = consume(COLON, "Expect ':' after '?'.")
-            val third = equality()
-            expr = Expr.Ternary(
-                first = expr,
-                operator1 = operator1,
-                second = second,
-                operator2 = operator2,
-                third = third
-            )
+        consume(RIGHT_BRACE, "Expect '}' after block.")
+        return statements
+    }
+
+    private fun printStatement(): Stmt {
+        val value = expression()
+        consume(
+            type = SEMICOLON,
+            message = "Expect ';' after value."
+        )
+        return Stmt.Print(value)
+    }
+
+    private fun expressionStatement(): Stmt {
+        val value = expression()
+        consume(
+            type = SEMICOLON,
+            message = "Expect ';' after value."
+        )
+        return Stmt.Expression(value)
+    }
+
+    private fun assignment(): Expr {
+        val expr = equality()
+
+        if (match(EQUAL)) {
+            val equals = previous()
+            val value = assignment()
+
+            if (expr is Expr.Variable) {
+                val name = expr.name
+                return Expr.Assign(name, value)
+            }
+
+            error(equals, "Invalid assignment target.")
         }
 
         return expr
+    }
+
+    private fun expression(): Expr {
+        return assignment()
     }
 
     private fun equality(): Expr {
@@ -125,6 +187,10 @@ class Parser(val tokens: List<Token>) {
             return Expr.Grouping(expr)
         }
 
+        if (match(IDENTIFIER)) {
+            return Expr.Variable(previous())
+        }
+
         throw error(token = peek(), "Expect expression.")
     }
 
@@ -190,6 +256,7 @@ class Parser(val tokens: List<Token>) {
                 RETURN -> {
                     return
                 }
+
                 else -> {}
             }
 
