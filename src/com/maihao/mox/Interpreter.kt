@@ -18,6 +18,12 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     /* Stmt.Visitor */
+    override fun visitWhileStmt(stmt: Stmt.While) {
+        while (isTruthy(stmt.condition)) {
+            execute(stmt.body)
+        }
+    }
+
     override fun visitBlockStmt(stmt: Stmt.Block) {
         executeBlock(stmt.statements, Environment(environment))
     }
@@ -49,6 +55,18 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     /* Expr.Visitor */
+    override fun visitLogicalExpr(expr: Expr.Logical): Any? {
+        val left: Any? = evaluate(expr.left)
+
+        if (expr.operator.type == OR) {
+            if (isTruthy(left)) return left
+        } else {
+            if (!isTruthy(left)) return left
+        }
+
+        return evaluate(expr.right)
+    }
+
     override fun visitVariableExpr(expr: Expr.Variable): Any? {
         return environment[expr.name]
     }
