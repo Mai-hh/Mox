@@ -27,6 +27,7 @@ fun main(args: Array<String>) {
     defineAst(outputDir, "Stmt", listOf(
         "Block        -> statements: List<Stmt>",
         "Expression   -> expression: Expr",
+        "IF           -> condition: Expr, thenBranch: Stmt, elseBranch: Stmt?",
         "Print        -> expression: Expr",
         "Var          -> name: Token, initializer: Expr?"
     ))

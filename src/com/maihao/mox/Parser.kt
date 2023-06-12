@@ -5,22 +5,38 @@ import com.maihao.mox.TokenType.*
 /*
 Parser rules:
 program        → declaration* EOF ;
+
 declaration    → varDecl
                | statement ;
+
 statement      → exprStmt
+               | ifStmt
                | printStmt
                | block ;
+
+ifStmt         → "if" "(" expression ")" statement
+               ( "else" statement )? ;
+
 block          → "{" declaration* "}" ;
+
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
 expression     → assignment ;
+
 assignment     → IDENTIFIER "=" assignment
                | equality ;
+
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+
 comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+
 term           → factor ( ( "-" | "+" ) factor )* ;
+
 factor         → unary ( ( "/" | "*" ) unary )* ;
+
 unary          → ( "!" | "-" ) unary
                | primary ;
+
 primary        → "true" | "false" | "nil"
                | NUMBER | STRING
                | "(" expression ")"
@@ -64,9 +80,24 @@ class Parser(val tokens: List<Token>) {
     }
 
     private fun statement(): Stmt =
-        if (match(PRINT)) printStatement()
+        if (match(IF)) ifStatement()
+        else if (match(PRINT)) printStatement()
         else if (match(LEFT_BRACE)) Stmt.Block(block())
         else expressionStatement()
+
+    private fun ifStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+        var elseBranch: Stmt? = null
+        if (match(ELSE)) {
+            elseBranch = statement()
+        }
+
+        return Stmt.IF(condition, thenBranch, elseBranch)
+    }
 
     private fun block(): List<Stmt> {
         val statements = mutableListOf<Stmt>()

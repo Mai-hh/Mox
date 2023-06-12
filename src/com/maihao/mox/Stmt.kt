@@ -4,6 +4,7 @@ sealed class Stmt {
 	interface Visitor<R> {
 		fun visitBlockStmt(stmt: Block): R
 		fun visitExpressionStmt(stmt: Expression): R
+		fun visitIFStmt(stmt: IF): R
 		fun visitPrintStmt(stmt: Print): R
 		fun visitVarStmt(stmt: Var): R
 	}
@@ -18,6 +19,13 @@ sealed class Stmt {
 
 		override fun <R> accept(visitor: Visitor<R>): R {
 			return visitor.visitExpressionStmt(this)
+		}
+	}
+
+	class IF(val condition: Expr,val thenBranch: Stmt,val elseBranch: Stmt?,) : Stmt() {
+
+		override fun <R> accept(visitor: Visitor<R>): R {
+			return visitor.visitIFStmt(this)
 		}
 	}
 
