@@ -20,6 +20,7 @@ fun main(args: Array<String>) {
             "Grouping -> expression: Expr",
             "Literal  -> value: Any?",
             "Variable -> name: Token",
+            "Logical  -> left: Expr, operator: Token, right: Expr",
             "Unary    -> operator: Token, right: Expr",
             "Ternary  -> first: Expr, operator1: Token, second: Expr, operator2: Token, third: Expr"
         )
@@ -29,7 +30,8 @@ fun main(args: Array<String>) {
         "Expression   -> expression: Expr",
         "IF           -> condition: Expr, thenBranch: Stmt, elseBranch: Stmt?",
         "Print        -> expression: Expr",
-        "Var          -> name: Token, initializer: Expr?"
+        "Var          -> name: Token, initializer: Expr?",
+        "While        -> condition: Expr, body: Stmt"
     ))
 }
 

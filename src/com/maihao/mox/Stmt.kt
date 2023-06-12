@@ -7,6 +7,7 @@ sealed class Stmt {
 		fun visitIFStmt(stmt: IF): R
 		fun visitPrintStmt(stmt: Print): R
 		fun visitVarStmt(stmt: Var): R
+		fun visitWhileStmt(stmt: While): R
 	}
 	class Block(val statements: List<Stmt>,) : Stmt() {
 
@@ -40,6 +41,13 @@ sealed class Stmt {
 
 		override fun <R> accept(visitor: Visitor<R>): R {
 			return visitor.visitVarStmt(this)
+		}
+	}
+
+	class While(val condition: Expr,val body: Stmt,) : Stmt() {
+
+		override fun <R> accept(visitor: Visitor<R>): R {
+			return visitor.visitWhileStmt(this)
 		}
 	}
 
