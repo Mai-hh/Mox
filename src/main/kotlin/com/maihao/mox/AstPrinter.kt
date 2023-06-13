@@ -4,6 +4,9 @@
 //class AstPrinter : Expr.Visitor<String> {
 //
 //    internal fun print(expr: Expr?) = expr?.accept(this)
+//    override fun visitAssignExpr(expr: Expr.Assign): String {
+//        TODO("Not yet implemented")
+//    }
 //
 //    override fun visitBinaryExpr(expr: Expr.Binary) = parenthesis(
 //        name = expr.operator.lexeme,
@@ -36,6 +39,10 @@
 //
 //    override fun visitVariableExpr(expr: Expr.Variable): String {
 //        return expr.name.toString()
+//    }
+//
+//    override fun visitLogicalExpr(expr: Expr.Logical): String {
+//        TODO("Not yet implemented")
 //    }
 //
 //
