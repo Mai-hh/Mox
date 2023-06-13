@@ -19,7 +19,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     /* Stmt.Visitor */
     override fun visitWhileStmt(stmt: Stmt.While) {
-        while (isTruthy(stmt.condition)) {
+        while (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.body)
         }
     }
@@ -100,7 +100,6 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitAssignExpr(expr: Expr.Assign): Any? {
         val value = evaluate(expr.value)
-        println("${expr.name.lexeme} -> $value")
         environment.assign(expr.name, value)
         return value
     }
@@ -225,6 +224,5 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
         return obj.toString()
     }
-
 
 }
