@@ -69,19 +69,19 @@ class Parser(val tokens: List<Token>) {
     fun parse(): List<Stmt> {
         val statements = mutableListOf<Stmt>()
         while (!isAtEnd()) {
-            declaration()?.let { statements.add(it) }
+            statements.add(declaration())
         }
 
         return statements
     }
 
-    private fun declaration(): Stmt? {
+    private fun declaration(): Stmt {
         try {
             if (match(VAR)) return varDeclaration()
             return statement()
         } catch (error: ParseError) {
             synchronize()
-            return null
+            return Stmt.None
         }
     }
 
@@ -169,14 +169,18 @@ class Parser(val tokens: List<Token>) {
             elseBranch = statement()
         }
 
-        return Stmt.IF(condition, thenBranch, elseBranch)
+        return Stmt.If(
+            condition,
+            thenBranch,
+            elseBranch
+        )
     }
 
     private fun block(): List<Stmt> {
         val statements = mutableListOf<Stmt>()
 
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
-            declaration()?.let { statements.add(it) }
+            statements.add(declaration())
         }
 
         consume(RIGHT_BRACE, "Expect '}' after block.")

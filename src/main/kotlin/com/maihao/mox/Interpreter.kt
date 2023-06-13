@@ -28,7 +28,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         executeBlock(stmt.statements, Environment(environment))
     }
 
-    override fun visitIFStmt(stmt: Stmt.IF) {
+    override fun visitIfStmt(stmt: Stmt.If) {
         if (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.thenBranch)
         } else {
@@ -47,10 +47,9 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitVarStmt(stmt: Stmt.Var) {
         var value: Any? = null
-        stmt.initializer?.let {
-            value = evaluate(it)
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer)
         }
-
         environment.define(stmt.name.lexeme, value)
     }
 
@@ -68,7 +67,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitVariableExpr(expr: Expr.Variable): Any? {
-        return environment[expr.name]
+        return environment.get(expr.name)
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary): Any? {
@@ -101,6 +100,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitAssignExpr(expr: Expr.Assign): Any? {
         val value = evaluate(expr.value)
+        println("${expr.name.lexeme} -> $value")
         environment.assign(expr.name, value)
         return value
     }

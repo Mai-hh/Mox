@@ -1,42 +1,40 @@
 package com.maihao.mox
 
-class Environment(
-    var enclosing: Environment? = null
-) {
-    private val values: MutableMap<String, Any?> = mutableMapOf()
-    internal fun define(name: String, value: Any?) {
-        values[name] = value
-    }
+class Environment(val enclosingEnv: Environment? = null) {
 
-    internal operator fun get(name: Token): Any? {
-        if (values.containsKey(name.lexeme)) {
-            return values[name.lexeme]
-        }
+    private val values = HashMap<String, Any?>()
 
-        enclosing?.run {
-            return get(name)
-        }
-
-        throw RuntimeError(
-            name,
-            "Undefined variable '${name.lexeme}'."
-        )
-    }
+    fun define(name: String, value: Any?) = values.set(name, value)
 
     fun assign(name: Token, value: Any?) {
-        if (values.containsKey(name.lexeme)) {
-            values[name.lexeme] = value
-            return
+        when {
+            values.containsKey(name.lexeme) -> values[name.lexeme] = value
+            enclosingEnv != null -> enclosingEnv.assign(name, value)
+            else -> throw RuntimeError(name, "Undefined variable ${name.lexeme}.")
         }
-
-        enclosing?.run {
-            assign(name, value)
-            return
-        }
-
-        throw RuntimeError(
-            name,
-            "Undefined variable '${name.lexeme}'."
-        )
     }
+
+    fun assignAt(distance: Int, name: Token, value: Any?) = ancestor(distance).values.set(name.lexeme, value)
+
+    fun get(name: Token): Any? {
+        return when {
+            values.containsKey(name.lexeme) -> {
+                if (values[name.lexeme] == Unassigned) throw RuntimeError(name, "Variable ${name.lexeme} accessed prior to assignment!")
+                else values[name.lexeme]
+            }
+            enclosingEnv != null -> enclosingEnv.get(name)
+            else -> throw RuntimeError(name, "Undefined variable ${name.lexeme}.")
+        }
+    }
+
+    fun getAt(distance: Int, name: String) = ancestor(distance).values[name]
+
+    private fun ancestor(distance: Int): Environment {
+        var environment = this
+        for (i in 0 until distance) environment = environment.enclosingEnv!!
+        return environment
+    }
+
+    /** A simple object to signify a variable not yet assigned. */
+    object Unassigned
 }
