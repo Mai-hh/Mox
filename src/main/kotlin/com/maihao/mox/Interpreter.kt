@@ -3,9 +3,26 @@ package com.maihao.mox
 import com.maihao.mox.TokenType.*
 
 
-class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
+class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
-    private var environment = Environment()
+    val globals = Environment()
+    private var environment = globals
+
+    init {
+        globals.define("clock", object : MoxCallable {
+            override fun call(interpreter: Interpreter, arguments: List<Any?>): Any {
+                return System.currentTimeMillis() / 1000.0
+            }
+
+            override fun arity(): Int {
+                return 0
+            }
+
+            override fun toString(): String {
+                return "<native fn>"
+            }
+        })
+    }
 
     internal fun interpret(statements: List<Stmt>) {
         try {
@@ -38,6 +55,11 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
         evaluate(stmt.expression)
+    }
+
+    override fun visitFunctionStmt(stmt: Stmt.Function) {
+        val function = MoxFunction(stmt)
+        environment.define(stmt.name.lexeme, function)
     }
 
     override fun visitPrintStmt(stmt: Stmt.Print) {
@@ -159,6 +181,28 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
     }
 
+    override fun visitCallExpr(expr: Expr.Call): Any? {
+        val callee = evaluate(expr.callee)
+
+        val arguments = mutableListOf<Any?>()
+        for (argument in expr.arguments) {
+            arguments.add(evaluate(argument))
+        }
+
+        if (callee !is MoxCallable) {
+            throw RuntimeError(expr.paren, "Can only call functions and classes.")
+        }
+
+        val function = callee
+        if (arguments.size != function.arity()) {
+            throw RuntimeError(
+                expr.paren,
+                "Expected ${function.arity()} arguments but got ${arguments.size}."
+            )
+        }
+        return function.call(this, arguments)
+    }
+
     override fun visitTernaryExpr(expr: Expr.Ternary): Any? {
         val first = evaluate(expr.first)
         val second = evaluate(expr.second)
@@ -191,15 +235,15 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
 
-    private fun evaluate(expr: Expr): Any? {
+    internal fun evaluate(expr: Expr): Any? {
         return expr.accept(this)
     }
 
-    private fun execute(stmt: Stmt) {
+    internal fun execute(stmt: Stmt) {
         stmt.accept(this)
     }
 
-    private fun executeBlock(statements: List<Stmt>, environment: Environment) {
+    internal fun executeBlock(statements: List<Stmt>, environment: Environment) {
         val previous = this.environment
         try {
             this.environment = environment

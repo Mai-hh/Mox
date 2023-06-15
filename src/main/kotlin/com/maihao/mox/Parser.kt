@@ -6,8 +6,14 @@ import com.maihao.mox.TokenType.*
 Parser rules:
 program        → declaration* EOF ;
 
-declaration    → varDecl
+declaration    → funDecl
+               | varDecl
                | statement ;
+
+funDecl        → "fun" function ;
+function       → IDENTIFIER "(" parameters? ")" block ;
+
+parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
 statement      → exprStmt
                | forStmt
@@ -50,8 +56,11 @@ term           → factor ( ( "-" | "+" ) factor )* ;
 
 factor         → unary ( ( "/" | "*" ) unary )* ;
 
-unary          → ( "!" | "-" ) unary
-               | primary ;
+unary          → ( "!" | "-" ) unary | call ;
+
+call           → primary ( "(" arguments? ")" )* ;
+
+arguments      → expression ( "," expression )* ;
 
 primary        → "true" | "false" | "nil"
                | NUMBER | STRING
@@ -60,7 +69,9 @@ primary        → "true" | "false" | "nil"
 
  */
 
-class Parser(val tokens: List<Token>) {
+class Parser(
+    val tokens: List<Token>
+) {
 
     private class ParseError : RuntimeException()
 
@@ -69,20 +80,43 @@ class Parser(val tokens: List<Token>) {
     fun parse(): List<Stmt> {
         val statements = mutableListOf<Stmt>()
         while (!isAtEnd()) {
-            statements.add(declaration())
+            declaration()?.let { statements.add(it) }
         }
 
         return statements
     }
 
-    private fun declaration(): Stmt {
+    private fun declaration(): Stmt? {
         try {
+            if (match(FUN)) return function("function")
             if (match(VAR)) return varDeclaration()
             return statement()
         } catch (error: ParseError) {
             synchronize()
-            return Stmt.None
+            return null
         }
+    }
+
+    private fun function(kind: String): Stmt.Function {
+        val name = consume(IDENTIFIER, "Expect $kind name.")
+
+        consume(LEFT_PAREN, "Expect '(' after $kind name.")
+
+        val parameters = mutableListOf<Token>()
+
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.")
+                }
+
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."))
+            } while (match(COMMA))
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.")
+
+        val body = block()
+        return Stmt.Function(name, parameters, body)
     }
 
     private fun varDeclaration(): Stmt {
@@ -180,7 +214,9 @@ class Parser(val tokens: List<Token>) {
         val statements = mutableListOf<Stmt>()
 
         while (!check(RIGHT_BRACE) && !isAtEnd()) {
-            statements.add(declaration())
+            declaration()?.let {
+                statements.add(it)
+            }
         }
 
         consume(RIGHT_BRACE, "Expect '}' after block.")
@@ -305,7 +341,41 @@ class Parser(val tokens: List<Token>) {
             val right = unary()
             return Expr.Unary(operator, right)
         }
-        return primary()
+        return call()
+    }
+
+    private fun call(): Expr {
+        var expr = primary()
+
+        while (true) {
+            if (match(LEFT_PAREN)) {
+                expr = finishCall(expr)
+            } else {
+                break
+            }
+        }
+
+        return expr
+    }
+
+    private fun finishCall(callee: Expr): Expr {
+        val arguments = mutableListOf<Expr>()
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (arguments.size >= 255) {
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(expression())
+            } while (match(COMMA))
+        }
+
+        val paren = consume(RIGHT_PAREN, "Expect ')' after arguments.")
+
+        return Expr.Call(
+            callee = callee,
+            paren = paren,
+            arguments = arguments
+        )
     }
 
     private fun primary(): Expr {

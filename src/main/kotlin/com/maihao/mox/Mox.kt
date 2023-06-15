@@ -7,6 +7,11 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
+interface MoxCallable {
+    fun arity(): Int
+    fun call(interpreter: Interpreter, arguments: List<Any?>): Any?
+}
+
 fun main(args: Array<String>) {
     if (args.size > 1) {
         println("Usage: mox [script]")

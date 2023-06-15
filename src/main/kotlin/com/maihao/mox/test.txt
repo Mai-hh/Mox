@@ -1,8 +1,3 @@
-var a = 2;
-var b = 2;
-if (a > b) {
-    print "a > b";
-    print a + b;
-} else if (a == b) {
-    print "a = b";
+fun sayHi() {
+    print first;
 }

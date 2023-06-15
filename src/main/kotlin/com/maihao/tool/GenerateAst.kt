@@ -17,6 +17,7 @@ fun main(args: Array<String>) {
         types = listOf(
             "Assign   -> name: Token, value: Expr",
             "Binary   -> left: Expr, operator: Token, right: Expr",
+            "Call     -> callee: Expr, paren: Token, arguments: List<Expr>",
             "Grouping -> expression: Expr",
             "Literal  -> value: Any?",
             "Variable -> name: Token",
@@ -28,6 +29,7 @@ fun main(args: Array<String>) {
     defineAst(outputDir, "Stmt", listOf(
         "Block        -> statements: List<Stmt>",
         "Expression   -> expression: Expr",
+        "Function     -> name: Token, params: List<Token>, body: List<Stmt>",
         "If           -> condition: Expr, thenBranch: Stmt, elseBranch: Stmt?",
         "Print        -> expression: Expr",
         "Var          -> name: Token, initializer: Expr?",
