@@ -1,6 +1,6 @@
 package com.maihao.mox
 
-class Environment(val enclosingEnv: Environment? = null) {
+class Environment(val enclosing: Environment? = null) {
 
     private val values = HashMap<String, Any?>()
 
@@ -9,7 +9,7 @@ class Environment(val enclosingEnv: Environment? = null) {
     fun assign(name: Token, value: Any?) {
         when {
             values.containsKey(name.lexeme) -> values[name.lexeme] = value
-            enclosingEnv != null -> enclosingEnv.assign(name, value)
+            enclosing != null -> enclosing.assign(name, value)
             else -> throw RuntimeError(name, "Undefined variable ${name.lexeme}.")
         }
     }
@@ -22,7 +22,7 @@ class Environment(val enclosingEnv: Environment? = null) {
                 if (values[name.lexeme] == Unassigned) throw RuntimeError(name, "Variable ${name.lexeme} accessed prior to assignment!")
                 else values[name.lexeme]
             }
-            enclosingEnv != null -> enclosingEnv.get(name)
+            enclosing != null -> enclosing.get(name)
             else -> throw RuntimeError(name, "Undefined variable ${name.lexeme}.")
         }
     }
@@ -31,7 +31,7 @@ class Environment(val enclosingEnv: Environment? = null) {
 
     private fun ancestor(distance: Int): Environment {
         var environment = this
-        for (i in 0 until distance) environment = environment.enclosingEnv!!
+        for (i in 0 until distance) environment = environment.enclosing!!
         return environment
     }
 

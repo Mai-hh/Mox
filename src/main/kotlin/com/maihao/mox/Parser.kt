@@ -19,8 +19,11 @@ statement      → exprStmt
                | forStmt
                | ifStmt
                | printStmt
+               | returnStmt
                | whileStmt
                | block ;
+
+returnStmt     → "return" expression? ";" ;
 
 exprStmt       → expression ";" ;
 
@@ -115,7 +118,9 @@ class Parser(
         }
         consume(RIGHT_PAREN, "Expect ')' after parameters.")
 
+        consume(LEFT_BRACE, "Expect '{' before $kind body.")
         val body = block()
+
         return Stmt.Function(name, parameters, body)
     }
 
@@ -130,12 +135,23 @@ class Parser(
     }
 
     private fun statement(): Stmt =
-        if (match(IF)) ifStatement()
-        else if (match(FOR)) forStatement()
-        else if (match(PRINT)) printStatement()
-        else if (match(WHILE)) whileStatement()
-        else if (match(LEFT_BRACE)) Stmt.Block(block())
-        else expressionStatement()
+        when {
+            match(IF) -> ifStatement()
+            match(FOR) -> forStatement()
+            match(PRINT) -> printStatement()
+            match(WHILE) -> whileStatement()
+            match(RETURN) -> returnStatement()
+            match(LEFT_BRACE) -> Stmt.Block(block())
+            else -> expressionStatement()
+        }
+
+    private fun returnStatement(): Stmt {
+        val keyword: Token = previous()
+        val value = if (!check(SEMICOLON)) expression() else null
+
+        consume(SEMICOLON, "Expect ';' after return value.")
+        return Stmt.Return(keyword, value)
+    }
 
     private fun forStatement(): Stmt {
         consume(LEFT_PAREN, "Expect '(' after 'while'.")
