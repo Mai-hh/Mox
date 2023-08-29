@@ -87,7 +87,7 @@ private fun constructor(fieldList: String): String {
     val fields: List<String> = fieldList.split(", ")
     var params = ""
     for (field: String in fields) {
-        params += "val $field,"
+        params += "val $field, "
     }
     return params
 }

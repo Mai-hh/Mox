@@ -11,15 +11,29 @@ class MoxTest {
 
     @Test
     fun testControlFlowIfElse() {
-        testScript("IfElseTest")
+        testScript(
+            chapter = "controlflow",
+            "IfElseTest"
+        )
     }
 
     @Test
     fun testControlFlowForLoop() {
-        testScript("ForLoopTest")
+        testScript(
+            chapter = "controlflow",
+            "ForLoopTest"
+        )
     }
 
-    private fun testScript(filename: String) {
+    @Test
+    fun testFunctionsReturnStmt() {
+        testScript(
+            chapter = "functions",
+            "FunctionFiboTest"
+        )
+    }
+
+    private fun testScript(chapter: String, filename: String) {
         val byteArrayOutputStream = ByteArrayOutputStream()
         val printStream = PrintStream(byteArrayOutputStream)
 
@@ -29,14 +43,14 @@ class MoxTest {
         // 设置新的 System.out
         System.setOut(printStream)
 
-        Mox.runFile("src/test/kotlin/testfiles/controlflow/$filename")
+        Mox.runFile("src/test/kotlin/testfiles/$chapter/$filename")
 
         System.setOut(oldOut)
 
         // 获取输出的结果
         val result = byteArrayOutputStream.toString().trim()
 
-        val expected = Files.readString(Paths.get("src/test/kotlin/testfiles/controlflow/${filename}.expected")).trim()
+        val expected = Files.readString(Paths.get("src/test/kotlin/testfiles/$chapter/${filename}.expected")).trim()
 
         assertEquals(expected, result)
     }
