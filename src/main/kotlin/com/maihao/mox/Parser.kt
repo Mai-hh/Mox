@@ -91,7 +91,9 @@ class Parser(
 
     private fun declaration(): Stmt? {
         try {
-            if (match(FUN)) return function("function")
+            if (match(FUN)) {
+                return if (match(IDENTIFIER)) { function("function") } else { function("lambda") }
+            }
             if (match(VAR)) return varDeclaration()
             return statement()
         } catch (error: ParseError) {
@@ -100,8 +102,8 @@ class Parser(
         }
     }
 
-    private fun function(kind: String): Stmt.Function {
-        val name = consume(IDENTIFIER, "Expect $kind name.")
+    private fun function(kind: String): Stmt {
+        val name = if (kind == "function") previous() else null
 
         consume(LEFT_PAREN, "Expect '(' after $kind name.")
 
@@ -121,7 +123,7 @@ class Parser(
         consume(LEFT_BRACE, "Expect '{' before $kind body.")
         val body = block()
 
-        return Stmt.Function(name, parameters, body)
+        return if (name == null) Stmt.Lambda(parameters, body) else Stmt.Function(name, parameters, body)
     }
 
     private fun varDeclaration(): Stmt {
@@ -395,6 +397,7 @@ class Parser(
     }
 
     private fun primary(): Expr {
+        if (match(FUN)) return lambdaExpression()
         if (match(FALSE)) return Expr.Literal(false)
         if (match(TRUE)) return Expr.Literal(true)
         if (match((NIL))) return Expr.Literal(null)
@@ -410,6 +413,24 @@ class Parser(
         }
 
         throw error(token = peek(), "Expect expression.")
+    }
+
+    private fun lambdaExpression(): Expr {
+        consume(LEFT_PAREN, "Expect '(' before lambda parameters.")
+        val parameters: MutableList<Token> = mutableListOf()
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.")
+                }
+
+                parameters.add(consume(IDENTIFIER, message = "Expect parameter name."))
+            } while (match(COMMA))
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.")
+        consume(LEFT_BRACE, "Expect '{' before lambda body")
+        val body = block()
+        return Expr.Lambda(parameters, body)
     }
 
     private fun isAtEnd(): Boolean {

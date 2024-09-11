@@ -3,7 +3,7 @@ package com.maihao.mox
 import com.maihao.mox.TokenType.*
 
 
-class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
+class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     val globals = Environment()
     private var environment = globals
@@ -58,8 +58,13 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = MoxFunction(stmt, environment)
+        val function = MoxFunction(stmt, closure = environment)
         environment.define(stmt.name.lexeme, function)
+    }
+
+    override fun visitLambdaStmt(stmt: Stmt.Lambda) {
+        val lambda = MoxLambda(stmt, closure = environment)
+        environment.define(name = "fn $environment", value = lambda)
     }
 
     override fun visitPrintStmt(stmt: Stmt.Print) {
@@ -219,6 +224,11 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
         return evaluate(expr.expression)
+    }
+
+    override fun visitLambdaExpr(expr: Expr.Lambda): Any? {
+        val lambda: MoxLambda = MoxLambda(declaration = expr, closure = environment)
+        return lambda
     }
 
     override fun visitLiteralExpr(expr: Expr.Literal): Any? {

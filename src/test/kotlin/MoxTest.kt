@@ -9,10 +9,16 @@ import java.nio.file.Paths
 
 class MoxTest {
 
+    private companion object {
+        const val CONTROL_FLOW = "controlflow"
+        const val FUNCTIONS = "functions"
+        const val RESOLVING_BINDING = "resolvingandbinding"
+    }
+
     @Test
     fun testControlFlowIfElse() {
         testScript(
-            chapter = "controlflow",
+            chapter = CONTROL_FLOW,
             "IfElseTest"
         )
     }
@@ -20,7 +26,7 @@ class MoxTest {
     @Test
     fun testControlFlowForLoop() {
         testScript(
-            chapter = "controlflow",
+            chapter = CONTROL_FLOW,
             "ForLoopTest"
         )
     }
@@ -28,8 +34,25 @@ class MoxTest {
     @Test
     fun testFunctionsReturnStmt() {
         testScript(
-            chapter = "functions",
+            chapter = FUNCTIONS,
             "FunctionFiboTest"
+        )
+    }
+
+    @Test
+    fun testFunctionsAnonymousFunctions() {
+        testScript(
+            chapter = FUNCTIONS,
+            filename = "FunctionAnonymouseFunctionsTest"
+        )
+    }
+
+
+    @Test
+    fun testRBResolver() {
+        testScript(
+            chapter = RESOLVING_BINDING,
+            filename = "resolverTest"
         )
     }
 

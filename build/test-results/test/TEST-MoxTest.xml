@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="MoxTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2023-06-15T01:15:27" hostname="MaihaodeMacBook-Air.local" time="0.101">
+<testsuite name="MoxTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2024-11-02T01:49:29" hostname="10-18-239-193.dynapool.wireless.nyu.edu" time="0.023">
   <properties/>
-  <testcase name="testControlFlowForLoop()" classname="MoxTest" time="0.091"/>
-  <testcase name="testControlFlowIfElse()" classname="MoxTest" time="0.005"/>
+  <testcase name="testRBResolver()" classname="MoxTest" time="0.023"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

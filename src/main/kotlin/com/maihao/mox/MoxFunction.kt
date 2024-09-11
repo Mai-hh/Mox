@@ -24,6 +24,49 @@ class MoxFunction(
     }
 
     override fun toString(): String {
-        return "<fn ${declaration.name.lexeme}>"
+        return "<anonymous fn ${declaration.name.lexeme}>"
     }
+}
+
+class MoxLambda(
+    private val closure: Environment
+) : MoxCallable {
+
+    private lateinit var params: List<Token>
+    private lateinit var body: List<Stmt>
+
+    constructor(
+        declaration: Stmt.Lambda,
+        closure: Environment
+    ) : this(closure = closure) {
+        params = declaration.params
+        body = declaration.body
+    }
+
+    constructor(
+        declaration: Expr.Lambda,
+        closure: Environment
+    ) : this(closure = closure) {
+        params = declaration.params
+        body = declaration.body
+    }
+
+    override fun arity() = params.size
+
+    override fun call(interpreter: Interpreter, arguments: List<Any?>): Any? {
+        val environment = Environment(enclosing = closure)
+
+        for(i in params.indices) {
+            environment.define(params[i].lexeme, arguments[i])
+        }
+
+        try {
+            interpreter.executeBlock(body, environment)
+        } catch (returnValue: Return) {
+            return returnValue.value
+        }
+
+        return null
+    }
+
 }

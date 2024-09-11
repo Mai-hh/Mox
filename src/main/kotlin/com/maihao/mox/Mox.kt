@@ -32,7 +32,6 @@ class Mox {
         internal fun runFile(path: String) {
             val bytes = Files.readAllBytes(Paths.get(path))
             run(String(bytes, Charset.defaultCharset()))
-
             if (hadError) exitProcess(65)
             if (hadRuntimeError) exitProcess(70)
         }
@@ -73,9 +72,9 @@ class Mox {
 
         fun error(token: Token, message: String) {
             if (token.type == TokenType.EOF) {
-                report(token.line, " at end", message)
+                report(token.line, "at end", message)
             } else {
-                report(token.line, " at '${token.lexeme}'", message)
+                report(token.line, "at '${token.lexeme}'", message)
             }
         }
 
