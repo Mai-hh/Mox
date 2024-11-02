@@ -1,0 +1,27 @@
+if (true) {
+    var x = "hello";
+    print x;
+}
+
+fun foo() {
+    var x = "hello";
+    print x;
+}
+
+foo();
+
+fun foo2(x) {
+    x = "hello";
+    print x;
+}
+
+foo2("hi");
+
+var x = 20;
+fun updateX() {
+    x = 30;
+}
+
+print x;
+updateX();
+print x;
