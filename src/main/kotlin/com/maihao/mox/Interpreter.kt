@@ -1,12 +1,14 @@
 package com.maihao.mox
 
 import com.maihao.mox.TokenType.*
+import kotlin.math.exp
 
 
-class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
+class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
-    val globals = Environment()
+    private val globals = Environment()
     private var environment = globals
+    private val locals: MutableMap<Expr, Int> = HashMap()
 
     init {
         globals.define("clock", object : MoxCallable {
@@ -58,8 +60,13 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = MoxFunction(stmt, environment)
+        val function = MoxFunction(stmt, closure = environment)
         environment.define(stmt.name.lexeme, function)
+    }
+
+    override fun visitLambdaStmt(stmt: Stmt.Lambda) {
+        val lambda = MoxLambda(stmt, closure = environment)
+        environment.define(name = "fn $environment", value = lambda)
     }
 
     override fun visitPrintStmt(stmt: Stmt.Print) {
@@ -94,7 +101,14 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitVariableExpr(expr: Expr.Variable): Any? {
-        return environment.get(expr.name)
+        return lookUpVariable(expr.name, expr)
+    }
+
+    private fun lookUpVariable(name: Token, expr: Expr): Any? {
+        val distance = locals[expr]
+        return distance?.let {
+            environment.getAt(it, name.lexeme)
+        } ?: globals.get(name)
     }
 
     override fun visitUnaryExpr(expr: Expr.Unary): Any? {
@@ -127,7 +141,12 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitAssignExpr(expr: Expr.Assign): Any? {
         val value = evaluate(expr.value)
-        environment.assign(expr.name, value)
+        val distance = locals[expr]
+        distance?.let {
+            environment.assignAt(distance = it, name = expr.name, value = value)
+        } ?: {
+            globals.assign(name = expr.name, value = value)
+        }
         return value
     }
 
@@ -221,6 +240,11 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         return evaluate(expr.expression)
     }
 
+    override fun visitLambdaExpr(expr: Expr.Lambda): Any {
+        val lambda = MoxLambda(declaration = expr, closure = environment)
+        return lambda
+    }
+
     override fun visitLiteralExpr(expr: Expr.Literal): Any? {
         return expr.value
     }
@@ -272,6 +296,10 @@ class Interpreter: Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
 
         return obj.toString()
+    }
+
+    fun resolve(expr: Expr, depth: Int) {
+        locals[expr] = depth
     }
 
 }
