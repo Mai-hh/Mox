@@ -33,10 +33,6 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         resolve(expr.expression)
     }
 
-    override fun visitLambdaExpr(expr: Expr.Lambda) {
-
-    }
-
     override fun visitLiteralExpr(expr: Expr.Literal) {
 
     }
@@ -79,16 +75,6 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         define(stmt.name)
 
         resolveFunction(stmt, FunctionType.FUNCTION)
-    }
-
-    override fun visitLambdaStmt(stmt: Stmt.Lambda) {
-        beginScope()
-        for (param in stmt.params) {
-            declare(param)
-            define(param)
-        }
-        resolve(stmt.body)
-        endScope()
     }
 
     override fun visitIfStmt(stmt: Stmt.If) {

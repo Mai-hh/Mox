@@ -6,8 +6,13 @@ import kotlin.math.exp
 
 class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
+    // 唯一全局变量作用域
     private val globals = Environment()
+
+    // 当前进入的作用域
     private var environment = globals
+
+
     private val locals: MutableMap<Expr, Int> = HashMap()
 
     init {
@@ -44,7 +49,12 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitBlockStmt(stmt: Stmt.Block) {
-        executeBlock(stmt.statements, Environment(environment))
+        executeBlock(
+            statements = stmt.statements,
+            environment = Environment(
+                enclosing = environment
+            )
+        )
     }
 
     override fun visitIfStmt(stmt: Stmt.If) {
@@ -62,11 +72,6 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     override fun visitFunctionStmt(stmt: Stmt.Function) {
         val function = MoxFunction(stmt, closure = environment)
         environment.define(stmt.name.lexeme, function)
-    }
-
-    override fun visitLambdaStmt(stmt: Stmt.Lambda) {
-        val lambda = MoxLambda(stmt, closure = environment)
-        environment.define(name = "fn $environment", value = lambda)
     }
 
     override fun visitPrintStmt(stmt: Stmt.Print) {
@@ -142,10 +147,10 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     override fun visitAssignExpr(expr: Expr.Assign): Any? {
         val value = evaluate(expr.value)
         val distance = locals[expr]
-        distance?.let {
-            environment.assignAt(distance = it, name = expr.name, value = value)
-        } ?: {
-            globals.assign(name = expr.name, value = value)
+        if (distance != null) {
+            environment.assignAt(distance, expr.name, value)
+        } else {
+            globals.assign(expr.name, value)
         }
         return value
     }
@@ -238,11 +243,6 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
         return evaluate(expr.expression)
-    }
-
-    override fun visitLambdaExpr(expr: Expr.Lambda): Any {
-        val lambda = MoxLambda(declaration = expr, closure = environment)
-        return lambda
     }
 
     override fun visitLiteralExpr(expr: Expr.Literal): Any? {
