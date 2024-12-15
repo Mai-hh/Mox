@@ -4,8 +4,17 @@ import java.util.Stack
 
 private enum class FunctionType {
     NONE,
-    FUNCTION
+    FUNCTION,
+    INITIALIZER,
+    METHOD
 }
+
+private enum class ClassType {
+    NONE,
+    CLASS
+}
+
+private var currentClass = ClassType.NONE
 
 class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.Visitor<Unit> {
     private val scopes = Stack<MutableMap<String, Boolean>>()
@@ -29,12 +38,16 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         }
     }
 
+    override fun visitGetExpr(expr: Expr.Get) {
+        resolve(expr.obj)
+    }
+
     override fun visitGroupingExpr(expr: Expr.Grouping) {
         resolve(expr.expression)
     }
 
     override fun visitLiteralExpr(expr: Expr.Literal) {
-
+        // Do nothing
     }
 
     override fun visitVariableExpr(expr: Expr.Variable) {
@@ -50,6 +63,23 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         resolve(expr.right)
     }
 
+    override fun visitSetExpr(expr: Expr.Set) {
+        resolve(expr.value)
+        resolve(expr.obj)
+    }
+
+    override fun visitThisExpr(expr: Expr.This) {
+        if (currentClass == ClassType.NONE) {
+            Mox.error(
+                token = expr.keyword,
+                message = "Can't use 'this' outside of a class.",
+            )
+            return
+        }
+
+        resolveLocal(expr, expr.keyword)
+    }
+
     override fun visitUnaryExpr(expr: Expr.Unary) {
         resolve(expr.right)
     }
@@ -63,6 +93,29 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
     override fun visitBlockStmt(stmt: Stmt.Block) {
         beginScope()
         resolve(stmt.statements)
+        endScope()
+    }
+
+    override fun visitClassStmt(stmt: Stmt.Class) {
+        val enclosingClass: ClassType = currentClass
+        currentClass = ClassType.CLASS
+        declare(stmt.name)
+        define(stmt.name)
+
+        beginScope()
+        scopes.peek().put("this", true)
+
+        for (method in stmt.methods) {
+            var declaration = FunctionType.METHOD
+            if (method.name.lexeme == "init") {
+                declaration = FunctionType.INITIALIZER
+            }
+
+            resolveFunction(function = method, type = declaration)
+        }
+
+        currentClass = enclosingClass
+
         endScope()
     }
 
@@ -96,6 +149,12 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         }
 
         if (stmt.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Mox.error(
+                    token = stmt.keyword,
+                    message = "Can't return a value from an initializer."
+                )
+            }
             resolve(stmt.value)
         }
     }
@@ -130,7 +189,7 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
     private fun resolveLocal(expr: Expr, name: Token) {
         for (i in scopes.size - 1 downTo 0) {
             if (scopes[i].containsKey(name.lexeme)) {
-                interpreter.resolve(expr, scopes.size - 1 - i)
+                interpreter.resolve(expr, depth = scopes.size - 1 - i)
                 return
             }
         }

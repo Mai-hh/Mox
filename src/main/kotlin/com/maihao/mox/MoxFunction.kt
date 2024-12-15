@@ -2,7 +2,8 @@ package com.maihao.mox
 
 class MoxFunction(
     private val declaration: Stmt.Function,
-    private val closure: Environment
+    private val closure: Environment,
+    private val isInitializer: Boolean
 ) : MoxCallable {
 
     override fun arity() = declaration.params.size
@@ -17,10 +18,24 @@ class MoxFunction(
         try {
             interpreter.executeBlock(declaration.body, environment)
         } catch (returnValue: Return) {
+            if (isInitializer) return closure.getAt(0, "this")
+
             return returnValue.value
         }
 
+        if (isInitializer) return closure.getAt(0, "this")
+
         return null
+    }
+
+    fun bind(instance: MoxInstance): MoxFunction {
+        val environment = Environment(enclosing = closure)
+        environment.define(
+            name = "this",
+            value = instance
+        )
+
+        return MoxFunction(declaration, environment, isInitializer = isInitializer)
     }
 
     override fun toString(): String {

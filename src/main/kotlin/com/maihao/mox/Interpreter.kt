@@ -57,6 +57,29 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         )
     }
 
+    override fun visitClassStmt(stmt: Stmt.Class) {
+        environment.define(
+            name = stmt.name.lexeme,
+            value = null
+        )
+
+        val methods = mutableMapOf<String, MoxFunction>()
+        for (method in stmt.methods) {
+            val function = MoxFunction(
+                declaration = method,
+                closure = environment,
+                isInitializer = method.name.lexeme == "init"
+            )
+            methods[method.name.lexeme] = function
+        }
+
+        val klass = MoxClass(
+            name = stmt.name.lexeme,
+            methods = methods
+        )
+        environment.assign(name = stmt.name, value = klass)
+    }
+
     override fun visitIfStmt(stmt: Stmt.If) {
         if (isTruthy(evaluate(stmt.condition))) {
             execute(stmt.thenBranch)
@@ -70,7 +93,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitFunctionStmt(stmt: Stmt.Function) {
-        val function = MoxFunction(stmt, closure = environment)
+        val function = MoxFunction(stmt, closure = environment, isInitializer = false)
         environment.define(stmt.name.lexeme, function)
     }
 
@@ -103,6 +126,22 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         }
 
         return evaluate(expr.right)
+    }
+
+    override fun visitSetExpr(expr: Expr.Set): Any? {
+        val obj: Any? = evaluate(expr.obj)
+
+        if (obj !is MoxInstance) {
+            throw RuntimeError(expr.name, "Only instances have fields.")
+        }
+
+        val value: Any? = evaluate(expr.value)
+        obj.set(expr.name, value)
+        return value
+    }
+
+    override fun visitThisExpr(expr: Expr.This): Any? {
+        return lookUpVariable(expr.keyword, expr)
     }
 
     override fun visitVariableExpr(expr: Expr.Variable): Any? {
@@ -230,6 +269,15 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             )
         }
         return function.call(this, arguments)
+    }
+
+    override fun visitGetExpr(expr: Expr.Get): Any? {
+        val obj: Any? = evaluate(expr.obj)
+        if (obj is MoxInstance) {
+            return obj.get(expr.name)
+        }
+
+        throw RuntimeError(expr.name, "Only instances have properties.")
     }
 
     override fun visitTernaryExpr(expr: Expr.Ternary): Any? {

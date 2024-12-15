@@ -33,6 +33,38 @@ class MoxTest {
         )
     }
 
+    @Test
+    fun testClassesDeclaration() {
+        testScript(
+            chapter = "classes",
+            "declareClassTest"
+        )
+    }
+
+    @Test
+    fun testClassesInstancesAndMethod() {
+        testScript(
+            chapter = "classes",
+            "InstanceAndMethodTest"
+        )
+    }
+
+    @Test
+    fun testClassesThis() {
+        testScript(
+            chapter = "classes",
+            "thisClassTest"
+        )
+    }
+
+    @Test
+    fun testClassesInit() {
+        testScript(
+            chapter = "classes",
+            "initTest"
+        )
+    }
+
     private fun testScript(chapter: String, filename: String) {
         val byteArrayOutputStream = ByteArrayOutputStream()
         val printStream = PrintStream(byteArrayOutputStream)

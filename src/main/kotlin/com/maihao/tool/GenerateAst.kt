@@ -11,31 +11,41 @@ fun main(args: Array<String>) {
         exitProcess(64)
     }
     val outputDir = args[0]
+
     defineAst(
-        outputDir,
+        outputDir = outputDir,
         baseName = "Expr",
         types = listOf(
             "Assign   -> name: Token, value: Expr",
             "Binary   -> left: Expr, operator: Token, right: Expr",
             "Call     -> callee: Expr, paren: Token, arguments: List<Expr>",
+            "Get      -> obj: Expr, name: Token",
             "Grouping -> expression: Expr",
             "Literal  -> value: Any?",
             "Variable -> name: Token",
             "Logical  -> left: Expr, operator: Token, right: Expr",
+            "Set      -> obj: Expr, name: Token, value: Expr",
+            "This     -> keyword: Token",
             "Unary    -> operator: Token, right: Expr",
             "Ternary  -> first: Expr, operator1: Token, second: Expr, operator2: Token, third: Expr"
         )
     )
-    defineAst(outputDir, "Stmt", listOf(
-        "Block        -> statements: List<Stmt>",
-        "Expression   -> expression: Expr",
-        "Function     -> name: Token, params: List<Token>, body: List<Stmt>",
-        "If           -> condition: Expr, thenBranch: Stmt, elseBranch: Stmt?",
-        "Print        -> expression: Expr",
-        "Return       -> keyword: Token, value: Expr?",
-        "Var          -> name: Token, initializer: Expr?",
-        "While        -> condition: Expr, body: Stmt"
-    ))
+
+    defineAst(
+        outputDir = outputDir,
+        baseName = "Stmt",
+        types = listOf(
+            "Block        -> statements: List<Stmt>",
+            "Class        -> name: Token, methods: List<Function>",
+            "Expression   -> expression: Expr",
+            "Function     -> name: Token, params: List<Token>, body: List<Stmt>",
+            "If           -> condition: Expr, thenBranch: Stmt, elseBranch: Stmt?",
+            "Print        -> expression: Expr",
+            "Return       -> keyword: Token, value: Expr?",
+            "Var          -> name: Token, initializer: Expr?",
+            "While        -> condition: Expr, body: Stmt"
+        )
+    )
 }
 
 @Throws(IOException::class)

@@ -28,9 +28,15 @@ class AstPrinter : Expr.Visitor<String>, Stmt.Visitor<String> {
         )
     )
 
-    override fun visitCallExpr(expr: Expr.Call): String {
-        return "1"
-    }
+    override fun visitCallExpr(expr: Expr.Call): String = parenthesis(
+        name = "call",
+        exprs = arrayOf(expr.callee, *expr.arguments.toTypedArray())
+    )
+
+    override fun visitGetExpr(expr: Expr.Get): String = parenthesis(
+        name = "get ${expr.name}",
+        exprs = arrayOf(expr.obj)
+    )
 
     override fun visitTernaryExpr(expr: Expr.Ternary) = parenthesis(
         name = expr.operator1.lexeme + expr.operator2.lexeme,
@@ -65,6 +71,20 @@ class AstPrinter : Expr.Visitor<String>, Stmt.Visitor<String> {
         )
     )
 
+    override fun visitSetExpr(expr: Expr.Set): String {
+        return parenthesis(
+            name = "set ${expr.name}",
+            exprs = arrayOf(
+                expr.obj,
+                expr.value
+            )
+        )
+    }
+
+    override fun visitThisExpr(expr: Expr.This): String {
+        return expr.keyword.toString()
+    }
+
 
     override fun visitUnaryExpr(expr: Expr.Unary) = parenthesis(
         name = expr.operator.lexeme,
@@ -78,6 +98,10 @@ class AstPrinter : Expr.Visitor<String>, Stmt.Visitor<String> {
         }
         builder.append(")")
         return builder.toString()
+    }
+
+    override fun visitClassStmt(stmt: Stmt.Class): String {
+        TODO("Not yet implemented")
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression): String {
