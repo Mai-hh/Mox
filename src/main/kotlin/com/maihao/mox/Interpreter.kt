@@ -1,7 +1,6 @@
 package com.maihao.mox
 
 import com.maihao.mox.TokenType.*
-import kotlin.math.exp
 
 
 class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
@@ -58,6 +57,14 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     }
 
     override fun visitClassStmt(stmt: Stmt.Class) {
+        var superclass: Any? = null
+        if (stmt.superclass != null) {
+            superclass = evaluate(stmt.superclass)
+            if (superclass !is MoxClass) {
+                throw RuntimeError(stmt.superclass.name, "Superclass must be a class.")
+            }
+        }
+
         environment.define(
             name = stmt.name.lexeme,
             value = null
@@ -75,6 +82,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
 
         val klass = MoxClass(
             name = stmt.name.lexeme,
+            superclass = superclass as MoxClass?,
             methods = methods
         )
         environment.assign(name = stmt.name, value = klass)

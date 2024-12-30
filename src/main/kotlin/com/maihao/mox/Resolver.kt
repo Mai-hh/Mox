@@ -102,6 +102,10 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         declare(stmt.name)
         define(stmt.name)
 
+        if (stmt.superclass != null && stmt.name.lexeme == stmt.superclass.name.lexeme) {
+            resolve(stmt.superclass)
+        }
+
         beginScope()
         scopes.peek().put("this", true)
 

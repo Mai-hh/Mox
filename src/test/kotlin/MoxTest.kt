@@ -65,6 +65,14 @@ class MoxTest {
         )
     }
 
+    @Test
+    fun testClassesInheritance() {
+        testScript(
+            chapter = "classes",
+            "classInheritanceTest"
+        )
+    }
+
     private fun testScript(chapter: String, filename: String) {
         val byteArrayOutputStream = ByteArrayOutputStream()
         val printStream = PrintStream(byteArrayOutputStream)

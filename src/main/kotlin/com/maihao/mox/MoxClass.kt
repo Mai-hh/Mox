@@ -1,11 +1,16 @@
 package com.maihao.mox
 
-class MoxClass(val name: String, val methods: Map<String, MoxFunction>) : MoxCallable {
+class MoxClass(val name: String, val superclass: MoxClass?, val methods: Map<String, MoxFunction>) : MoxCallable {
 
     fun findMethod(name: String): MoxFunction? {
         if (methods.containsKey(name)) {
             return methods[name]
         }
+
+        if (superclass != null) {
+            return superclass.findMethod(name)
+        }
+
         return null
     }
 
