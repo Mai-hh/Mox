@@ -25,6 +25,7 @@ fun main(args: Array<String>) {
             "Variable -> name: Token",
             "Logical  -> left: Expr, operator: Token, right: Expr",
             "Set      -> obj: Expr, name: Token, value: Expr",
+            "Super    -> keyword: Token, method: Token",
             "This     -> keyword: Token",
             "Unary    -> operator: Token, right: Expr",
             "Ternary  -> first: Expr, operator1: Token, second: Expr, operator2: Token, third: Expr"

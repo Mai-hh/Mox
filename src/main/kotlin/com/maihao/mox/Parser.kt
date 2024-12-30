@@ -68,10 +68,10 @@ call           → primary ( "(" arguments? ")" | "." IDENTIFIER)* ;
 
 arguments      → expression ( "," expression )* ;
 
-primary        → "true" | "false" | "nil"
-               | NUMBER | STRING
-               | "(" expression ")"
-               | IDENTIFIER ;
+primary        → "true" | "false" | "nil" | "this"
+               | NUMBER | STRING | "(" expression ")"
+               | IDENTIFIER
+               | "super" "." IDENTIFIER;
 
  */
 
@@ -443,6 +443,16 @@ class Parser(
             val expr = expression()
             consume(RIGHT_PAREN, "Expect ')' after expression.")
             return Expr.Grouping(expr)
+        }
+
+        if (match(SUPER)) {
+            val keyword = previous()
+            consume(DOT, "Expect '.' after 'super'.")
+            val method = consume(IDENTIFIER, "Expect superclass method name.")
+            return Expr.Super(
+                keyword = keyword,
+                method = method
+            )
         }
 
         if (match(THIS)) {

@@ -81,6 +81,12 @@ class AstPrinter : Expr.Visitor<String>, Stmt.Visitor<String> {
         )
     }
 
+    override fun visitSuperExpr(expr: Expr.Super): String {
+        return parenthesis(
+            name = "super ${expr.keyword}, method ${expr.method}",
+        )
+    }
+
     override fun visitThisExpr(expr: Expr.This): String {
         return expr.keyword.toString()
     }

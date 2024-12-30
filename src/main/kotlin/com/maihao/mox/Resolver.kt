@@ -11,7 +11,8 @@ private enum class FunctionType {
 
 private enum class ClassType {
     NONE,
-    CLASS
+    CLASS,
+    SUBCLASS
 }
 
 private var currentClass = ClassType.NONE
@@ -68,6 +69,19 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         resolve(expr.obj)
     }
 
+    override fun visitSuperExpr(expr: Expr.Super) {
+        if (currentClass == ClassType.NONE) {
+            Mox.error(expr.keyword, "Can't use 'super' outside of a class.")
+        } else if (currentClass != ClassType.SUBCLASS) {
+            Mox.error(expr.keyword, "Can't use 'super' in a class with no superclass.")
+        }
+
+        resolveLocal(
+            expr = expr,
+            name = expr.keyword
+        )
+    }
+
     override fun visitThisExpr(expr: Expr.This) {
         if (currentClass == ClassType.NONE) {
             Mox.error(
@@ -101,13 +115,25 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
         currentClass = ClassType.CLASS
         declare(stmt.name)
         define(stmt.name)
-
-        if (stmt.superclass != null && stmt.name.lexeme == stmt.superclass.name.lexeme) {
+        if (stmt.superclass != null) {
+            currentClass = ClassType.SUBCLASS
             resolve(stmt.superclass)
         }
 
+        if (stmt.superclass != null && stmt.name.lexeme == stmt.superclass.name.lexeme) {
+            Mox.error(
+                token = stmt.superclass.name,
+                "A class can't inherit from itself"
+            )
+        }
+
+        if (stmt.superclass != null) {
+            beginScope()
+            scopes.peek()["super"] = true
+        }
+
         beginScope()
-        scopes.peek().put("this", true)
+        scopes.peek()["this"] = true
 
         for (method in stmt.methods) {
             var declaration = FunctionType.METHOD
@@ -117,10 +143,11 @@ class Resolver(private val interpreter: Interpreter) : Expr.Visitor<Unit>, Stmt.
 
             resolveFunction(function = method, type = declaration)
         }
+        endScope()
+
+        if (stmt.superclass != null) endScope()
 
         currentClass = enclosingClass
-
-        endScope()
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {

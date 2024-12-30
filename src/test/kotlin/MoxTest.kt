@@ -73,6 +73,14 @@ class MoxTest {
         )
     }
 
+    @Test
+    fun testClassesSuper() {
+        testScript(
+            chapter = "classes",
+            filename = "superTest"
+        )
+    }
+
     private fun testScript(chapter: String, filename: String) {
         val byteArrayOutputStream = ByteArrayOutputStream()
         val printStream = PrintStream(byteArrayOutputStream)

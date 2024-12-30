@@ -9,7 +9,7 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
     private val globals = Environment()
 
     // 当前进入的作用域
-    private var environment = globals
+    private var environment: Environment = globals
 
 
     private val locals: MutableMap<Expr, Int> = HashMap()
@@ -70,6 +70,11 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             value = null
         )
 
+        if (stmt.superclass != null) {
+            environment = Environment(enclosing = environment)
+            environment.define(name = "super", value = superclass)
+        }
+
         val methods = mutableMapOf<String, MoxFunction>()
         for (method in stmt.methods) {
             val function = MoxFunction(
@@ -85,6 +90,11 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
             superclass = superclass as MoxClass?,
             methods = methods
         )
+
+        if (superclass != null) {
+            environment = environment.enclosing!!
+        }
+
         environment.assign(name = stmt.name, value = klass)
     }
 
@@ -146,6 +156,27 @@ class Interpreter : Expr.Visitor<Any?>, Stmt.Visitor<Unit> {
         val value: Any? = evaluate(expr.value)
         obj.set(expr.name, value)
         return value
+    }
+
+    override fun visitSuperExpr(expr: Expr.Super): Any? {
+        val distance: Int = locals[expr] ?: 0
+        val superclass = environment.getAt(
+            distance = distance,
+            name = "super"
+        ) as MoxClass
+
+        val obj = environment.getAt(
+            distance = distance - 1,
+            name = "this"
+        ) as MoxInstance
+
+        val method = superclass.findMethod(expr.method.lexeme)
+            ?: throw RuntimeError(
+                token = expr.method,
+                message = "Undefined property '${expr.method.lexeme}'."
+            )
+
+        return method.bind(obj)
     }
 
     override fun visitThisExpr(expr: Expr.This): Any? {
