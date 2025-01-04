@@ -104,8 +104,13 @@ dog.speak(); // Output: Woof!
 
 Using Homebrew (macOS/Linux)
 
+```bash
 brew tap mai-hh/mox
+```
+
+```bash
 brew install mox
+```
 
 Building from Source
 	1.	Clone the repository:
